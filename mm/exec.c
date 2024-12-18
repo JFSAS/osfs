@@ -103,7 +103,7 @@ PUBLIC int do_exec()
 	/* setup eip & esp */
 	proc_table[src].regs.eip = elf_hdr->e_entry; /* @see _start.asm */
 	proc_table[src].regs.esp = PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK;
-
+	inqueue(&proc_table[src], queue + proc_table[src].queue_num);
 	strcpy(proc_table[src].name, pathname);
 
 	return 0;

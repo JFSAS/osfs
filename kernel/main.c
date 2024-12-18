@@ -35,7 +35,7 @@ PUBLIC int kernel_main()
 
 	struct task * t;
 	struct proc * p = proc_table;
-
+	QUEUE * q = queue;
 	char * stk = task_stack + STACK_SIZE_TOTAL;
 
 	for (i = 0; i < NR_TASKS + NR_PROCS; i++,p++,t++) {
@@ -114,7 +114,7 @@ PUBLIC int kernel_main()
 
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;
-
+		inqueue(p, q);
 		stk -= t->stacksize;
 	}
 
@@ -363,6 +363,7 @@ void Init()
 
 	int i;
 	for (i = 0; i < sizeof(tty_list) / sizeof(tty_list[0]); i++) {
+		printf("fork() for tty:: %s\n", tty_list[i]);
 		int pid = fork();
 		if (pid != 0) { /* parent process */
 			printf("[parent is running, child pid:%d]\n", pid);

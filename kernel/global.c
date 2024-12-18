@@ -95,4 +95,6 @@ PUBLIC	char *		logbuf		= (char*)0x800000;
 PUBLIC	const int	LOGBUF_SIZE	= 0x100000;
 PUBLIC	char *		logdiskbuf	= (char*)0x900000;
 PUBLIC	const int	LOGDISKBUF_SIZE	= 0x100000;
-
+PUBLIC  QUEUE          queue[3] = {{{0}, 0, 0, 0, 2},
+                                    {{0}, 0, 0, 0, 5},
+                                    {{0}, 0, 0, 0, 10}};

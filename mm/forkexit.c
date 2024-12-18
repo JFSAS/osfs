@@ -54,7 +54,8 @@ PUBLIC int do_fork()
 	p->ldt_sel = child_ldt_sel;
 	p->p_parent = pid;
 	sprintf(p->name, "%s_%d", proc_table[pid].name, child_pid);
-
+	inqueue(p, queue + p->queue_num);
+	
 	/* duplicate the process: T, D & S */
 	struct descriptor * ppd;
 

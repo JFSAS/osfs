@@ -22,7 +22,7 @@ PRIVATE void unblock(struct proc* p);
 PRIVATE int  msg_send(struct proc* current, int dest, MESSAGE* m);
 PRIVATE int  msg_receive(struct proc* current, int src, MESSAGE* m);
 PRIVATE int  deadlock(int src, int dest);
-
+PRIVATE void next();
 /*****************************************************************************
  *                                schedule
  *****************************************************************************/
@@ -251,7 +251,7 @@ PUBLIC void reset_msg(MESSAGE* p)
 PRIVATE void block(struct proc* p)
 {
 	assert(p->p_flags);
-	schedule();
+	schedule_mfqs();
 }
 
 /*****************************************************************************
