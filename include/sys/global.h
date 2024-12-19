@@ -62,4 +62,11 @@ extern	char *			logbuf;
 extern	const int		LOGBUF_SIZE;
 extern	char *			logdiskbuf;
 extern	const int		LOGDISKBUF_SIZE;
+
+
 extern  QUEUE 			queue[3];
+extern  char* 			white_list_table[];
+
+
+#define prot_file_nr 3
+#define white_list_nr 3

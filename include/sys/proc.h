@@ -38,6 +38,7 @@ struct proc {
         int priority;
 		int time_slice; // the left time of the time slice
 		int queue_num; // the queue number of the process
+		int inwhite; // if the process is in the white list
 	/* u32 pid;                   /\* process id passed in from MM *\/ */
 	char name[16];		   /* name of the process */
 

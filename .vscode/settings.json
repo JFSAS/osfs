@@ -4,6 +4,8 @@
         "cmath": "cpp",
         "global.h": "c",
         "proc.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "protect.h": "c",
+        "console.h": "c"
     }
 }

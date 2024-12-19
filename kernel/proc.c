@@ -48,6 +48,7 @@ PUBLIC void schedule_mfqs()
 		}
 		inqueue(p, q);
 		p->time_slice = q->time_slice; 
+		disp_str("time_slice");	
 		next();
 		assert(q->len <= NR_TASKS + NR_PROCS);
 		return ;
@@ -60,6 +61,7 @@ PUBLIC void schedule_mfqs()
 	*/
 	if(p->p_flags != 0){
 		inqueue(p, queue + p->queue_num);
+		disp_str("block");
 		next();
 		assert(q->len <= NR_TASKS + NR_PROCS);
 		return ;
@@ -70,10 +72,10 @@ PUBLIC void schedule_mfqs()
 		进入当前优先级队列
 		next
 	*/
-	int flag = 0;//判断是否有抢占
-	q--;
-	for(q; q >= queue; q--){
-		if(q->len > 0){
+	int flag = 0;
+	QUEUE *first_queue = queue;
+	for(first_queue; first_queue < queue; first_queue++){
+		if(first_queue->len > 0){
 			flag = 1;
 			break;
 		}
@@ -81,10 +83,11 @@ PUBLIC void schedule_mfqs()
 	if(flag == 1){
 		inqueue(p, queue + p->queue_num);
 		assert(q->len <= NR_TASKS + NR_PROCS);
+		disp_str("preempt");
 		next();
 		return ;
 	}
-
+	disp_str("continue");
 	return;
 }
 
@@ -97,6 +100,7 @@ PUBLIC void inqueue(struct proc* p, QUEUE* q){
 
 //把q队列的队首出队
 PUBLIC struct proc*  outqueue(QUEUE* q ){
+	assert(q->len > 0);
 	struct proc* p = q->taskqueue[q->front];
 	q->front = (q->front + 1) % QUEUE_LEN;
 	q->len--;
@@ -117,6 +121,9 @@ PRIVATE void next(){
 				assert(q->len <= NR_TASKS + NR_PROCS);
 				if (p->p_flags == 0) {
 					p_proc_ready = p;
+					disp_str("#");
+					disp_str(p_proc_ready->name);
+					disp_str("#");
 					return ;
 				}else{
 					inqueue(p, q);

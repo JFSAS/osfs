@@ -13,7 +13,7 @@ LDFLAGS		= -Ttext 0x1000 -m elf_i386
 
 DASMFLAGS	= -D
 LIB		= ../lib/orangescrt.a
-BIN		= touch rm ls cat vim process kill
+BIN		= touch rm ls cat vim process kill  
 
 # All Phony Targets
 .PHONY : everything final clean realclean disasm all install
@@ -77,6 +77,12 @@ vim.o: vim.c ../include/type.h ../include/stdio.h
 	$(CC) $(CFLAGS) -o $@ $<
 
 vim : vim.o start.o $(LIB)
+	$(LD) $(LDFLAGS) -o $@ $?
+
+test.o: test.c ../include/type.h ../include/stdio.h
+	$(CC) $(CFLAGS) -o $@ $<
+
+test: test.o start.o $(LIB)
 	$(LD) $(LDFLAGS) -o $@ $?
 
 process.o: process.c ../include/type.h ../include/stdio.h

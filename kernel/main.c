@@ -103,7 +103,7 @@ PUBLIC int kernel_main()
 		p->regs.eflags	= eflags;
 
 		p->ticks = p->priority = prio;
-
+		p->time_slice = q->time_slice;
 		p->p_flags = 0;
 		p->p_msg = 0;
 		p->p_recvfrom = NO_TASK;
@@ -111,7 +111,7 @@ PUBLIC int kernel_main()
 		p->has_int_msg = 0;
 		p->q_sending = 0;
 		p->next_sending = 0;
-
+		p->inwhite = 1;
 		for (j = 0; j < NR_FILES; j++)
 			p->filp[j] = 0;
 		inqueue(p, q);
@@ -125,7 +125,7 @@ PUBLIC int kernel_main()
 
 	init_clock();
         init_keyboard();
-
+	outqueue(q);
 	restart();
 
 	while(1){}
@@ -184,7 +184,7 @@ void untar(const char *filename)
     int fd = open(filename, O_RDWR);
     assert(fd != -1);
 
-    char buf[SECTOR_SIZE * 16];
+    char buf[SECTOR_SIZE * 32];
     int chunk = sizeof(buf);
     int i = 0;
     int bytes = 0;

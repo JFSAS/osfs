@@ -100,6 +100,14 @@ PUBLIC int do_exec()
 	proc_table[src].regs.ecx = argc; /* argc */
 	proc_table[src].regs.eax = (u32)orig_stack; /* argv */
 
+	proc_table[src].inwhite = 0;
+	for(int i = 0;i < white_list_nr;i++){
+		if(strcmp(white_list_table[i], pathname) == 0){
+			proc_table[src].inwhite = 1;
+			break;
+		}
+	}
+
 	/* setup eip & esp */
 	proc_table[src].regs.eip = elf_hdr->e_entry; /* @see _start.asm */
 	proc_table[src].regs.esp = PROC_IMAGE_SIZE_DEFAULT - PROC_ORIGIN_STACK;
