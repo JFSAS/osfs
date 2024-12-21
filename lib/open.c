@@ -19,7 +19,7 @@
 #include "global.h"
 #include "proto.h"
 
-// PRIVATE char* proc_file_table[] = {"ls", "kill", "process"};
+PRIVATE char* prot_file_table[] = {"ls", "kill", "process"};
 
 /*****************************************************************************
  *                                open
@@ -36,21 +36,21 @@ PUBLIC int open(const char *pathname, int flags)
 {
 	MESSAGE msg;
 
+	int inwhite = getprot();
+	int flag = 0;
+	for (int i = 0; i < prot_file_nr; i++){
+		if (strcmp(prot_file_table[i], pathname) == 0){
+			flag = 1;
+			break;
+		}
+	}
+	if (flag == 1 && inwhite == 0){
+		printf("You are not allowed to open this file\n");
+		return -1;
+	}
+
 	msg.type	= OPEN;
 
-	// int pid = getpid();
-	// int inwhite = p_proc_ready->inwhite;
-	// int flag = 0;
-	// for (int i = 0; i < prot_file_nr; i++){
-	// 	if (strcmp(proc_file_table[i], pathname) == 0){
-	// 		flag = 1;
-	// 		break;
-	// 	}
-	// }
-	// if (flag == 1 && inwhite == 0){
-	// 	printf("You are not allowed to open this file\n");
-	// 	return -1;
-	// }
 
 	msg.PATHNAME	= (void*)pathname;
 	msg.FLAGS	= flags;

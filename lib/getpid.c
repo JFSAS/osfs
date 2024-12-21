@@ -38,3 +38,15 @@ PUBLIC int getpid()
 
 	return msg.PID;
 }
+
+
+PUBLIC int getprot()
+{
+	MESSAGE msg;
+	msg.type = GET_PROT;
+
+	send_recv(BOTH, TASK_SYS, &msg);
+	assert(msg.type == SYSCALL_RET);
+
+	return msg.PROT;
+}

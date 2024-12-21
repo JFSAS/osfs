@@ -43,19 +43,8 @@ PUBLIC void clock_handler(int irq)
 	if (key_pressed)
 		inform_int(TASK_TTY);
 
-	if(ticks == 1){
-			disp_str("\n\n\n\n\n\n\n\n\n\n\n\n");
-		}
 	
-	
-    if(ticks < 0x30 ){
-		disp_str(p_proc_ready->name);
-		disp_str("ticks");
-		disp_int(ticks);
-		disp_str("..");
-	}
 	if (k_reenter != 0) {
-		disp_str("reenter");
 		return;
 		
 	}

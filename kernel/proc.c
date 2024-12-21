@@ -48,7 +48,6 @@ PUBLIC void schedule_mfqs()
 		}
 		inqueue(p, q);
 		p->time_slice = q->time_slice; 
-		disp_str("time_slice");	
 		next();
 		assert(q->len <= NR_TASKS + NR_PROCS);
 		return ;
@@ -61,7 +60,6 @@ PUBLIC void schedule_mfqs()
 	*/
 	if(p->p_flags != 0){
 		inqueue(p, queue + p->queue_num);
-		disp_str("block");
 		next();
 		assert(q->len <= NR_TASKS + NR_PROCS);
 		return ;
@@ -83,11 +81,9 @@ PUBLIC void schedule_mfqs()
 	if(flag == 1){
 		inqueue(p, queue + p->queue_num);
 		assert(q->len <= NR_TASKS + NR_PROCS);
-		disp_str("preempt");
 		next();
 		return ;
 	}
-	disp_str("continue");
 	return;
 }
 
@@ -121,9 +117,6 @@ PRIVATE void next(){
 				assert(q->len <= NR_TASKS + NR_PROCS);
 				if (p->p_flags == 0) {
 					p_proc_ready = p;
-					disp_str("#");
-					disp_str(p_proc_ready->name);
-					disp_str("#");
 					return ;
 				}else{
 					inqueue(p, q);
