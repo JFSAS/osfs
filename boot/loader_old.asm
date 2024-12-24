@@ -22,10 +22,11 @@ LABEL_GDT:			Descriptor             0,                    0, 0						; 空描述�
 LABEL_DESC_FLAT_C:		Descriptor             0,              0fffffh, DA_CR  | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_FLAT_RW:		Descriptor             0,              0fffffh, DA_DRW | DA_32 | DA_LIMIT_4K			; 0 ~ 4G
 LABEL_DESC_VIDEO:		Descriptor	 0B8000h,               0ffffh, DA_DRW                         | DA_DPL3	; 显存首地址
+; GDT ------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 GdtLen		equ	$ - LABEL_GDT
 GdtPtr		dw	GdtLen - 1				; 段界限
-		dd	LOADER_PHY_ADDR + LABEL_GDT		; 基地址
+		dd	LOADER_PHY_ADDR + LABEL_GDT		; 基地址 (让基地址八字节对齐将起到优化速度之效果，目前懒得改)
 ; The GDT is not a segment itself; instead, it is a data structure in linear address space.
 ; The base linear address and limit of the GDT must be loaded into the GDTR register. -- IA-32 Software Developer’s Manual, Vol.3A
 
@@ -48,7 +49,7 @@ LABEL_START:			; <--- 从这里开始 *************
 	mov	sp, BaseOfStack
 
 	mov	dh, 0			; "Loading  "
-	; call	DispStrRealMode		; 显示字符串
+	call	DispStrRealMode		; 显示字符串
 
 	; 得到内存数
 	mov	ebx, 0			; ebx = 后续值, 开始时需为 0
@@ -60,7 +61,6 @@ LABEL_START:			; <--- 从这里开始 *************
 	int	15h			; int 15h
 	jc	.MemChkFail
 	add	di, 20
-	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS 的个数
 	inc	dword [_dwMCRNumber]	; dwMCRNumber = ARDS 的个数
 	cmp	ebx, 0
 	jne	.MemChkLoop
@@ -118,7 +118,7 @@ LABEL_GOTO_NEXT_SECTOR_IN_ROOT_DIR:
 
 LABEL_NO_KERNELBIN:
 	mov	dh, 3			; "No KERNEL."
-	; call	DispStrRealMode		; 显示字符串
+	call	DispStrRealMode		; 显示字符串
 	jmp	$			; 没有找到 KERNEL.BIN, 死循环在这里
 
 LABEL_FILENAME_FOUND:			; 找到 KERNEL.BIN 后便来到这里继续
@@ -134,7 +134,7 @@ LABEL_FILENAME_FOUND:			; 找到 KERNEL.BIN 后便来到这里继续
 	jmp	.2
 .1:
 	mov	dh, 4			; "Too Large"
-	; call	DispStrRealMode		; 显示字符串
+	call	DispStrRealMode		; 显示字符串
 	jmp	$			; KERNEL.BIN 太大，死循环在这里
 .2:
 	add	di, 01Ah		; di -> 首 Sector
@@ -220,7 +220,7 @@ LABEL_FILE_LOADED:
 	;; 硬盘操作完毕
 
 	mov	dh, 2			; "Ready."
-	; call	DispStrRealMode		; 显示字符串
+	call	DispStrRealMode		; 显示字符串
 
 	
 ; 下面准备跳入保护模式 -------------------------------------------
@@ -414,11 +414,8 @@ LABEL_PM_START:
 
 	call	DispMemInfo
 ;;; 	call	DispReturn
-;;; 	call	DispHDInfo
-
+;;; 	call	DispHDInfo	; int 13h 读出的硬盘 geometry 好像有点不对头，不知道为什么，干脆不管它了
 	call	SetupPaging
-
-	call    Test_Alloc_Free
 
 	;mov	ah, 0Fh				; 0000: 黑底    1111: 白字
 	;mov	al, 'P'
@@ -703,7 +700,7 @@ DispMemInfo:
 	push	ecx
 
 	push	szMemChkTitle
-	; call	DispStr
+	call	DispStr
 	add	esp, 4
 
 	mov	esi, MemChkBuf
@@ -713,14 +710,14 @@ DispMemInfo:
 	mov	edi, ARDStruct		;	{			// 依次显示：BaseAddrLow，BaseAddrHigh，LengthLow，LengthHigh，Type
 .1:					;
 	push	dword [esi]		;
-	; call	DispInt			;		DispInt(MemChkBuf[j*4]); // 显示一个成员
+	call	DispInt			;		DispInt(MemChkBuf[j*4]); // 显示一个成员
 	pop	eax			;
 	stosd				;		ARDStruct[j*4] = MemChkBuf[j*4];
 	add	esi, 4			;
 	dec	edx			;
 	cmp	edx, 0			;
 	jnz	.1			;	}
-	; call	DispReturn		;	printf("\n");
+	call	DispReturn		;	printf("\n");
 	cmp	dword [dwType], 1	;	if(Type == AddressRangeMemory) // AddressRangeMemory : 1, AddressRangeReserved : 2
 	jne	.2			;	{
 	mov	eax, [dwBaseAddrLow]	;
@@ -731,13 +728,13 @@ DispMemInfo:
 .2:					;	}
 	loop	.loop			;}
 					;
-	; call	DispReturn		;printf("\n");
+	call	DispReturn		;printf("\n");
 	push	szRAMSize		;
-	; call	DispStr			;printf("RAM size:");
+	call	DispStr			;printf("RAM size:");
 	add	esp, 4			;
 					;
 	push	dword [dwMemSize]	;
-	; call	DispInt			;DispInt(MemSize);
+	call	DispInt			;DispInt(MemSize);
 	add	esp, 4			;
 
 	pop	ecx
@@ -817,7 +814,7 @@ SetupPaging:
 	xor	eax, eax
 	mov	eax, PAGE_TBL_BASE | PG_P  | PG_USU | PG_RWW
 .1:
-	stosd               ; 将eax存到edi相应的位置
+	stosd
 	add	eax, 4096		; 为了简化, 所有页表在内存中是连续的.
 	loop	.1
 
@@ -845,244 +842,7 @@ SetupPaging:
 
 	ret
 ; 分页机制启动完毕 ----------------------------------------------------------
-Linear2Physical:
-;	mov eax, 0x40000
-	push ds
-	mov bx, SelectorFlatRW
-	mov ds,bx
-	mov ebx,cr3
-	and ebx,0xfffff000
 
-	;push eax
-	;call DispInt
-	;add esp,4
-
-	mov ecx, eax
-	shr eax,22
-	and eax,0x3ff
-	shl eax,2
-	mov ebx,[eax+ebx]
-	
-	test ebx,0x00000001
-	jz   .not_exist
-	
-	and ebx, 0xfffff000
-	
-	mov eax, ecx
-	shr eax,12
-	and eax,0x3ff
-	shl eax,2
-	mov ebx,[eax+ebx]
-	
-	test ebx,0x00000001
-	jz .not_exist
-	
-	and ebx,0xfffff000
-
-	and ecx,0xfff
-	add ebx,ecx
-	mov eax,ebx
-	jmp .exit
-.not_exist:
-	mov ebx,0xffffffff
-.exit:
-	pop ds
-	ret
-
-TestL2P:
-	push ds
-	push edx
-	mov  dx, SelectorFlatRW
-	mov  ds,dx
-
-	push eax
-	push Linear
-	call DispStr
-	add  esp,4	
-	pop  eax
-
-	push eax
-	call DispInt
-	pop  eax	
-	call Linear2Physical
-	
-	push eax
-	push Physical
-	call DispStr
-	add  esp,4
-	pop  eax
-
-	push ebx
-	call DispInt
-	pop  ebx
-
-	pop edx	
-	pop ds
-	ret 	
-
-
-
-
-
-
-		;页目录表地址：CR3高20位
-		;PDE地址：页目录表地址+线性地址高10位（左移2位）
-		;页表基址：PDE高20位
-		;PTE地址：页表地址+线性地址中间10位（左移2位）
-		;物理页基址：PTE高20位
-;----------------------------------------------------------------------------
-;寻找空闲页，返回物理地址，eax
-;----------------------------------------------------------------------------
-alloc_4k_page:
-
-	push  ds
-	push  es		; 保存寄存器当前状态
-	
-	xor eax, eax		; eax清零
-	mov ax, SelectorFlatRW	; 可写内存段选择器
-	mov es, ax
-	mov ds, ax
-	
-.search:
-	bts  [BitMap], eax    	; 在bitmap中eax指定的位寻找是否存在空闲页
-	jnc  .find		; cf=0,有空闲页
-	inc  eax 
-	cmp  eax,BitMapLen*8  	; 每个字节有8位
-	jl   .search		; if eax<BitMap
-	hlt
-
-.find:  
-	shl  eax,12           	; 页大小4K
-	pop  es
-	pop  ds
-	ret
-
-; ---------------------------------------------------------------------------
-; 虚拟页管理，获取线性地址，查找对应页目录项，如果目录项对应的页表不存在，则创建页表
-; 输入 eax，分配的页数，返回 ebx,线性地址
-; ---------------------------------------------------------------------------
-alloc_pages:
-
-	push ds
-	push es
-	
-	mov bx, SelectorFlatRW		; 可写内存段选择器
-	mov ds, bx
-	mov es, bx
-	
-	mov ecx, eax
-	mov ebx, 4096
-	mul ebx				; 页大小为4KB
-	
-	mov ebx, [es:AvaLinearAddress]	; 获取当前可用的线性地址
-	add [es:AvaLinearAddress],eax	; 更新空闲的线性地址
-	push ebx			; save当前可用的线性地址
-	; 设置ebx为页目录的基地址
-	mov  eax, ebx
-	mov  ebx, cr3
-
-        and  ebx, 0xfffff000		; ebx = CR3高20位,为页目录的基地址
-	and  eax, 0xffc00000		; 线性地址高十位左移两位
-	shr  eax, 22
-	shl  eax, 2
-	add  ebx, eax			; ebx=PDE
-	mov  edx, ebx			; save
-	mov  ebx, [ebx]
-	; 检查PDE是否存在,如果不存在，则需要创建一个新的PDE
-	test ebx, 0x00000001
-	jnz  .pde_exist
-	; PDE不存在,创建
-	mov ebx, cr3		; ebx=页目录表地址
-	mov ebx, [ebx]
-	and ebx, 0xfffff000	; 页表基址
-	shl eax, 10		; 线性地址高10位左移两位
-	add ebx, eax		; PDE
-	or  ebx, 0x00000007	; 修改权限位,和存在位
-	mov [edx], ebx
-
-.pde_exist:
-	mov eax,[esp]		; 取出栈顶线性地址
-	and ebx, 0xfffff000     ; PDE高20位
-	and eax, 0x003ff000
-	shr eax, 12
-	shl eax, 2		; 线性地址中间10位左移2位
-	add ebx, eax		; PTE
-
-.change_pte:
-	; 更新每个pte和物理地址映射
-	call alloc_4k_page	; 分配一页
-	or eax, 0x00000007	; 修改pte中的权限位,和存在位
-	mov [ebx] , eax		; 更新pte
-	add ebx, 4		; next pte
-	loop  .change_pte	; 直到为请求的每一页都分配了物理内存并更新了相应的PTE
-	
-	pop ebx
-	pop es
-	pop ds
-	ret
-
-;--------------------------------------
-;虚拟页回收
-;输入 ebx, 回收的页数
-;--------------------------------------
-free_pages:
-	push ds
-	push es
-	push ebx		; 页数入栈
-	push eax
-
-	mov bx, SelectorFlatRW	
-	mov ds, bx
-	mov es, bx
-		
-	; 与分配时的计算方式相同
-	mov ebx, cr3
-	and ebx, 0xfffff000
-	and eax, 0xffc00000	
-	shr eax, 20
-	add ebx, eax     	; ebx=PDE
-	mov edx, [ebx]
-	and edx, 0xfffffff8	; 修改pde中的权限位,和存在位
-	mov [ebx], edx
-
-	; 遍历pte
-	mov ebx, [ebx]   	; ebx=PTE	
-	mov eax, [esp]          ; 取出栈顶线性地址
-	add esp, 4 
-	; pte=页表地址+线性地址中间10位（左移2位）
-	and ebx,0xfffff000
-	and eax,0x003ff000
-	shr eax,12
-	shl eax,2
-	add ebx, eax      	; ebx=PTE
-	mov ecx, [esp]          ; ecx=页数
-	add esp,4
-
-.change_pte:
-	mov eax, [ebx]		; eax=当前PTE的地址
-	and eax, 0xfffffff8     ; 修改pte中的权限位,和存在位
-	mov edx, eax
-	shr edx, 12		; edx=物理页基址=PTE高20位
-	btr [BitMap], edx	; 清除edx指定的位,让相应的物理页面是“空闲”的
-
-	mov [ebx], eax		; 将更新后的PTE值写回到其原始位置
-	add ebx,32		; 处理多个连续页面
-	loop .change_pte
-	; 恢复到内存分配前的状态
-	pop es
-	pop ds
-	ret 
-
-Test_Alloc_Free:
-	xchg bx,bx		;magic
-	mov eax,4
-	call alloc_pages	;内存分配
-	xchg bx,bx		;magic
-	mov eax,ebx
-	mov ebx,4
-	call free_pages		;内存释放
-	xchg bx,bx		;magic
-	ret
 
 
 ; InitKernel ---------------------------------------------------------------------------------
@@ -1143,16 +903,7 @@ _ARDStruct:			; Address Range Descriptor Structure
 	_dwLengthHigh:		dd	0
 	_dwType:		dd	0
 _MemChkBuf:	times	256	db	0
-
-_PageTableNumber		dd	0
-_BitMap:        times   32      db      0xff    ; low 1mb is occupid
-		times   32      db      0x00    ; 1mb is available
-BitMapLen       equ     $ - _BitMap
-_AvaLinearAddress               dd      0x8000_0000
-_Linear:                        db      0Ah,"Linear Address: ",0
-_Physical:  
 ;
-
 ;; 保护模式下使用这些符号
 szMemChkTitle		equ	LOADER_PHY_ADDR + _szMemChkTitle
 szRAMSize		equ	LOADER_PHY_ADDR + _szRAMSize
@@ -1174,13 +925,6 @@ ARDStruct		equ	LOADER_PHY_ADDR + _ARDStruct
 	dwLengthHigh	equ	LOADER_PHY_ADDR + _dwLengthHigh
 	dwType		equ	LOADER_PHY_ADDR + _dwType
 MemChkBuf		equ	LOADER_PHY_ADDR + _MemChkBuf
-
-PageTableNumber		equ	_PageTableNumber- $$
-BitMap                  equ     _BitMap		- $$ 
-AvaLinearAddress        equ     _AvaLinearAddress - $$ 
-Linear                  equ     _Linear          - $$
-Physical                equ     _Physical        - $$
-
 
 
 ; 堆栈就在数据段的末尾
